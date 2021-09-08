@@ -1,0 +1,84 @@
+
+
+#==========================
+#    position control    
+#==========================
+record(ai, "acu_src_pos_5")
+{
+    field(DESC, "source position 5")
+    field(SCAN, "Passive")
+    field(PREC, "2")
+    field(EGU, "degree")
+    field(PINI, "YES")
+    field(HOPR, "360.")
+    field(LOPR, "0.")
+
+    field(LOW, "0.")
+    field(LSV, "MAJOR")
+    field(HIGH, "360.")
+    field(HSV, "MAJOR")
+}
+
+
+#==========================
+#      motion control    
+#==========================
+record(calcout, "acu_src_pos_5_swst")
+{
+    field(SCAN, "1 second")
+    field(INPA, "acu_src_pos_5.VAL")
+    field(INPB, "acu_src_pos_5.LOPR")
+    field(INPC, "acu_src_pos_5.HOPR")
+    field(CALC, "A>=B && A<=C ? 1:0")
+}
+
+record(bi, "acu_power_5")
+{
+    field(DESC, "Power 5")
+    field(SCAN, "Passive")
+    field(PINI, "YES")
+}
+
+record(ai, "acu_mot_setI_5")
+{
+    field(DESC, "Current 5")
+    field(SCAN, "Passive")
+
+    field(PREC, "2")
+    field(EGU, "A")
+    field(PINI, "YES")
+    field(LOPR, "-0.5")
+    field(HOPR, "0.")
+    field(LOW, "-0.5")
+    field(LSV, "MAJOR")
+    field(HIGH, "0.")
+    field(HSV, "MAJOR")
+}
+
+record(calcout, "acu_mot_I_5")
+{
+    field(SCAN, "1 second")
+    field(INPA, "acu_mot_setI_5.VAL")
+    field(INPB, "acu_power_5.VAL")
+    field(CALC, "B ? A:0")
+
+    field(PREC, "2")
+    field(EGU, "A")
+    field(PINI, "YES")
+    field(LOPR, "-0.5")
+    field(HOPR, "0.")
+    field(LOW, "-0.5")
+    field(LSV, "MAJOR")
+    field(HIGH, "0.")
+    field(HSV, "MAJOR")
+}
+
+record(calcout, "acu_mot_I_5_swst")
+{
+    field(SCAN, "1 second")
+    field(INPA, "acu_mot_I_5.VAL")
+    field(INPB, "acu_mot_I_5.LOPR")
+    field(INPC, "acu_mot_I_5.HOPR")
+    field(CALC, "A>=B && A<=C ? 1:0")
+}
+
