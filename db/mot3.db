@@ -1,7 +1,7 @@
 
 
 #==========================
-#    position control    
+#    position monitor    
 #==========================
 record(ai, "acu_src_pos_3")
 {
@@ -19,10 +19,6 @@ record(ai, "acu_src_pos_3")
     field(HSV, "MAJOR")
 }
 
-
-#==========================
-#      motion control    
-#==========================
 record(calcout, "acu_src_pos_3_swst")
 {
     field(SCAN, "1 second")
@@ -32,6 +28,9 @@ record(calcout, "acu_src_pos_3_swst")
     field(CALC, "A>=B && A<=C ? 1:0")
 }
 
+#==========================
+#      motion control    
+#==========================
 record(bi, "acu_power_3")
 {
     field(DESC, "Power 3")
