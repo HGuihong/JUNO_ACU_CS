@@ -48,10 +48,6 @@ int main(int argc, char **argv)
 	float		pvalue;
 	int		status;
 
-    for(int i=0;i<10;i++) {
-        printf("%s\n", alarmStatusString[i]);
-    }
-
 	/*
  	 *	Check for valid arguments
 	 */
@@ -227,7 +223,7 @@ void save_status(MYSQL* database, int evokech)
     if(evokech<4) load_status = statusvalue[evokech+15];
 
     char query_status[2000];
-    sprintf(query_status, "INSERT INTO status (acu_id, smpl_time, power_status, pos_status, current_status, load_status) VALUES ('%d', '%s', %d, %d, %d, %d)", 
+    sprintf(query_status, "INSERT INTO samplestatus (acu_id, smpl_time, power_status, pos_status, current_status, load_status) VALUES ('%d', '%s', %d, %d, %d, %d)", 
           evokech+1, buffer,  power_status, pos_status, current_status, load_status);
 
 
