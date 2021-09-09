@@ -1,0 +1,146 @@
+# Example MySQL Setup
+########################
+
+
+
+# ----------------------
+# Channel: ID and name
+DROP TABLE IF EXISTS channel;
+CREATE TABLE IF NOT EXISTS channel
+(
+   channel_id INT UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
+   name VARCHAR(100) NOT NULL
+   #smpl_mode_id INT UNSIGNED NULL,
+   #smpl_val DOUBLE NULL
+);
+CREATE UNIQUE INDEX channel_name_idx ON channel (name);
+INSERT INTO channel(channel_id, name) VALUES
+  (1, 'acu_power_1'),
+  (2, 'acu_power_2'),
+  (3, 'acu_power_3'),
+  (4, 'acu_power_4'),
+  (5, 'acu_power_5'),
+  (6, 'acu_src_pos_1'),
+  (7, 'acu_src_pos_2'),
+  (8, 'acu_src_pos_3'),
+  (9, 'acu_src_pos_4'),
+  (10, 'acu_src_pos_5'),
+  (11, 'acu_mot_I_1'),
+  (12, 'acu_mot_I_2'),
+  (13, 'acu_mot_I_3'),
+  (14, 'acu_mot_I_4'),
+  (15, 'acu_mot_I_5'),
+  (16, 'acu_mot_load_1'),
+  (17, 'acu_mot_load_2'),
+  (18, 'acu_mot_load_3'),
+  (19, 'acu_mot_load_4')
+;
+#UPDATE channel SET smpl_val=1 WHERE channel_id = 1;
+SELECT * FROM channel;
+
+
+# ----------------------
+# Severity mapping of severity ID to string
+DROP TABLE IF EXISTS severity;
+CREATE TABLE IF NOT EXISTS severity
+(
+   severity_id INT UNSIGNED NOT NULL PRIMARY KEY,
+   name VARCHAR(100) NOT NULL
+);
+INSERT INTO severity VALUES (0, 'OK'), (1, 'MINOR'), (2, 'MAJOR'), (3, 'INVALID');
+SELECT * FROM severity;
+
+
+# ----------------------
+# Status mapping of status ID to string
+DROP TABLE IF EXISTS status;
+CREATE TABLE IF NOT EXISTS status
+(
+   status_id INT UNSIGNED NOT NULL PRIMARY KEY,
+   name VARCHAR(100) NOT NULL
+);
+INSERT INTO status VALUES (0, 'NO_ALARM'), (1, 'READ'), (2, 'WRITE'), (3, 'HIHI'), (4, 'HIGH'), (5, 'LOLO'), (6, 'LOW'), (7, 'STATE'), (8, 'COS'), (9, 'COMM');
+SELECT * FROM status;
+
+
+# ----------------------
+# Status mapping of power ID to string
+DROP TABLE IF EXISTS power;
+CREATE TABLE IF NOT EXISTS power
+(
+   power_id INT UNSIGNED PRIMARY KEY,
+   name VARCHAR(100) NOT NULL UNIQUE
+);
+INSERT INTO power (power_id, name) VALUES (0, 'OFF'), (1, 'ON');
+SELECT * FROM power;
+
+
+
+# ----------------------
+# Samples of a channel
+DROP TABLE IF EXISTS sample;
+CREATE TABLE IF NOT EXISTS sample
+(
+   #channel_id INT UNSIGNED NOT NULL                                       COMMENT 'Channel ID',
+   smpl_time TIMESTAMP NOT NULL  DEFAULT '2000-01-01 00:00:00'             COMMENT 'Time stamp',
+   #nanosecs INT UNSIGNED NOT NULL                                         COMMENT 'Nanoseconds of time stamp',
+   src_pos_1 FLOAT NOT NULL  DEFAULT 0                                 COMMENT 'position of src1',
+   src_pos_2 FLOAT NOT NULL  DEFAULT 0                                 COMMENT 'position of src2',
+   src_pos_3 FLOAT NOT NULL  DEFAULT 0                                 COMMENT 'position of src3',
+   src_pos_4 FLOAT NOT NULL  DEFAULT 0                                 COMMENT 'position of src4',
+   src_pos_5 FLOAT NOT NULL  DEFAULT 0                                 COMMENT 'position of src5',
+   
+   mot_I_1   FLOAT NOT NULL  DEFAULT 0                                 COMMENT 'current of mot1',
+   mot_I_2   FLOAT NOT NULL  DEFAULT 0                                 COMMENT 'current of mot2',
+   mot_I_3   FLOAT NOT NULL  DEFAULT 0                                 COMMENT 'current of mot3',
+   mot_I_4   FLOAT NOT NULL  DEFAULT 0                                 COMMENT 'current of mot4',
+   mot_I_5   FLOAT NOT NULL  DEFAULT 0                                 COMMENT 'current of mot5',
+
+   mot_load_1  FLOAT NOT NULL  DEFAULT 0                                 COMMENT 'load of mot1',
+   mot_load_2  FLOAT NOT NULL  DEFAULT 0                                 COMMENT 'load of mot2',
+   mot_load_3  FLOAT NOT NULL  DEFAULT 0                                 COMMENT 'load of mot3',
+   mot_load_4  FLOAT NOT NULL  DEFAULT 0                                 COMMENT 'load of mot4'
+   
+   #FOREIGN KEY (channel_id) REFERENCES channel (channel_id) ON DELETE CASCADE
+   #FOREIGN KEY (severity_id) REFERENCES severity (severity_id) ON DELETE CASCADE,
+   #FOREIGN KEY (power_id) REFERENCES power (status_id) ON DELETE CASCADE
+);
+
+  
+
+# These inserts are in reverse time order to check retrieval
+#INSERT INTO sample (smpl_time, src_pos_1, mot_I_1, mot_load_1)
+#   VALUES ('2000-01-01 00:00:00', 90., -0.05, 10);
+          
+
+
+
+# Dump all values for all channels
+#SELECT channel.name, smpl_time, severity.name, status.name, float_val
+#   FROM channel, severity, status, sample 
+#   WHERE channel.channel_id = sample.channel_id AND
+#         severity.severity_id = sample.severity_id AND
+#         status.status_id = sample.status_id
+#   ORDER BY channel.name, smpl_time
+#   LIMIT 50;
+
+
+DROP TABLE IF EXISTS samplestatus;
+CREATE TABLE IF NOT EXISTS samplestatus
+(
+   acu_id  VARCHAR(100)  NOT NULL       DEFAULT ""                                COMMENT 'Channel ID',
+   smpl_time TIMESTAMP     NOT NULL     DEFAULT '2000-01-01 00:00:00'             COMMENT 'Time stamp',
+   power_status  TINYINT   NOT NULL     DEFAULT 0                                 COMMENT 'power status',
+   pos_status  TINYINT     NOT NULL     DEFAULT 0                                 COMMENT 'position status',
+   current_status  TINYINT NOT NULL     DEFAULT 0                                 COMMENT 'current status',
+   load_status  TINYINT    NOT NULL     DEFAULT 0                                 COMMENT 'load status'
+);
+
+#INSERT INTO samplestatus (acu_id, smpl_time, power_status, pos_status, current_status, load_status)
+#   VALUES ("0", '2000-01-01 00:00:00', 11, 11, 11, 11);
+
+
+
+
+
+
