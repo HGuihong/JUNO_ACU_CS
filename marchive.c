@@ -19,6 +19,7 @@
 #include <cadef.h>
 #include <db_access.h>
 #include "alarmString.h"
+#include <time.h>
 
 #define USAGE	"usage: marchive host"
 
@@ -113,21 +114,32 @@ int main(int argc, char **argv)
     status = ca_pend_event(1.0);
     save_signal = -1;
 
+      
+    struct timeval start, end;  // record time consumption
+
     int sampcount = 0;
     while(sampcount<1E9) {
+    	gettimeofday(&start, NULL); 
         for(int i=0;i<chnum;i++) {
             status = ca_get(DBR_CTRL_FLOAT, chan[i], &ch_fild[i]);
             SEVCHK(status,NULL);
         }
-        status = ca_pend_io(1.0);
+        status = ca_pend_io(0.5);
         SEVCHK(status,NULL);
+		gettimeofday(&end, NULL);
+		double ca_get_time = (end.tv_sec - start.tv_sec) * 1000000 + (end.tv_usec - start.tv_usec);
 
+    	gettimeofday(&start, NULL); 
         for(int i=0;i<chnum;i++) {
             statusvalue[i] = ch_fild[i].status;
             samplevalue[i] = ch_fild[i].value;
         }
-        
         save_sample(conn);
+		gettimeofday(&end, NULL);
+		double mysql_time = (end.tv_sec - start.tv_sec) * 1000000 + (end.tv_usec - start.tv_usec);
+        printf("sample: %d, ca_get_time: %g ms, mysql_time: %g ms \n", sampcount, ca_get_time/1000,  mysql_time/1000);
+
+
         if(sampcount==0) {
             save_status(conn, 0);
             save_status(conn, 1);
@@ -140,9 +152,12 @@ int main(int argc, char **argv)
         save_signal = -1;
 
         //check ALARM
-        status = ca_pend_event(1.0);
+        status = ca_pend_event(1);
         //SEVCHK(status, "time out");
         sampcount ++;
+        
+ 
+
     }
     
 
