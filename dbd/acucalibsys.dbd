@@ -142,5 +142,13 @@ CREATE TABLE IF NOT EXISTS samplestatus
 
 
 
+DROP TABLE IF EXISTS sinsample;
+CREATE TABLE IF NOT EXISTS sinsample
+(
+   event_id INT UNSIGNED NOT NULL   PRIMARY KEY AUTO_INCREMENT                             COMMENT 'event ID',
+   smpl_time TIMESTAMP NOT NULL  DEFAULT '2000-01-01 00:00:00'            COMMENT 'Time stamp',
+   #nanosecs INT UNSIGNED NOT NULL                                         COMMENT 'Nanoseconds of time stamp',
+   value FLOAT NOT NULL  DEFAULT 0                                 COMMENT 'value'
+);
 
 
