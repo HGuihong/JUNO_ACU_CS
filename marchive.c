@@ -163,7 +163,7 @@ int main(int argc, char **argv)
     //estimate time consumption of trigger event (~ ) 
     else if (!strncmp(runmode, "2", 1)) {
         printf("mode2 \n");
-        status = ca_pend_event(10);   
+        status = ca_pend_event(1);   
         SEVCHK(status, "time out");
     }
 
