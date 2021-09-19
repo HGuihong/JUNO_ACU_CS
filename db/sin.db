@@ -4,9 +4,10 @@
 
 record(calcout, "sinch")
 {
-   field(SCAN, ".0005 second") #500 us
+   field(SCAN, ".1 second") #500 us
+   #field(SCAN, "Passive") #500 us
    field(INPA, "sinch")
-   field(CALC, "A < 0.5? SIN(3.14*(A+0.2)) : 0")
+   field(CALC, "A < 0.5? SIN(3.14*(A/2.+0.2)) : SIN(3.14*(A/2.-0.2))")
    field(PREC, "2")
    field(HOPR, "0.8")
    field(LOPR, "0.2")

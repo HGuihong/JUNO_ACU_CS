@@ -123,7 +123,7 @@ int main(int argc, char **argv)
     save_signal = -1;
     
 
-    status = ca_create_subscription(DBR_FLOAT,
+    status = ca_create_subscription(DBR_TIME_FLOAT,
                1, sinchan,  DBE_VALUE, listen_sinevent, conn, NULL);
     SEVCHK(status, NULL);
 
@@ -232,6 +232,7 @@ void listen_event(struct event_handler_args args)
 
 }
 
+
 void listen_sinevent(struct event_handler_args args)
 {
     time_t timer;
@@ -241,8 +242,16 @@ void listen_sinevent(struct event_handler_args args)
     tm_info = localtime(&timer);
     strftime(buffer, 26, "%Y-%m-%d %H:%M:%S", tm_info);
 
+	struct dbr_time_float *cdData;
+  	char    timeText[28];
+
+  	cdData = (struct dbr_time_float *) args.dbr;
+  	epicsTimeToStrftime(timeText,28,"%m/%d/%y %H:%M:%S.%09f",&cdData->stamp);
+  	printf("mca %-30s %s,  %g \n", ca_name(args.chid), timeText, *(dbr_float_t*)&cdData->value);
+    //printf("ns %d \n", *(int*)(&cdData->stamp.nsec));
+
     char query_sample[2000];
-    sprintf(query_sample, "INSERT INTO sinsample (smpl_time, value) VALUES ('%s', %g)", buffer, *(float*)args.dbr);
+    sprintf(query_sample, "INSERT INTO sinsample (smpl_time, value) VALUES ('%s', %g)", buffer, *(dbr_float_t*)&cdData->value);
 
     int sqlstat = mysql_query((MYSQL*)args.usr, query_sample);
     if(sqlstat) printf("%d", sqlstat);
