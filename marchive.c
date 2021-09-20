@@ -36,8 +36,8 @@ char* archchname[chnum]={"power_1", "power_2", "power_3", "power_4", "power_5",
                          "src_pos_1", "src_pos_2", "src_pos_3", "src_pos_4", "src_pos_5",
                          "mot_I_1", "mot_I_2", "mot_I_3", "mot_I_4", "mot_I_5",
                          "mot_load_1", "mot_load_2", "mot_load_3", "mot_load_4"}; 
-char* sinchname = "sinch";
-chid  sinchan;
+char* sinchname[1000];
+chid  sinchan[1000];
 
 void listen_event(struct event_handler_args args);
 void listen_sinevent(struct event_handler_args args);
@@ -77,8 +77,12 @@ int main(int argc, char **argv)
   	    status = ca_search(	chname[i], &chan[i]);
   	    SEVCHK(status, "Bad Channel Name?")
     }
-    status = ca_search(sinchname, &sinchan);
-    SEVCHK(status, "Bad Channel Name?")
+    for(int i=0;i<999;i++) {
+        char buffer[26];
+        sprintf(buffer, "sinch%d", i);
+        status = ca_search(&buffer, &sinchan[i]);
+        SEVCHK(status, "Bad Channel Name?")
+    }
 
 
 	/*
@@ -123,9 +127,11 @@ int main(int argc, char **argv)
     save_signal = -1;
     
 
-    status = ca_create_subscription(DBR_TIME_FLOAT,
-               1, sinchan,  DBE_VALUE, listen_sinevent, conn, NULL);
-    SEVCHK(status, NULL);
+    for(int i=0;i<999;i++) {
+        status = ca_create_subscription(DBR_TIME_FLOAT,
+                   1, sinchan[i],  DBE_VALUE, listen_sinevent, conn, NULL);
+        SEVCHK(status, NULL);
+    }
 
       
     struct timeval start, end;  // record time consumption
@@ -163,7 +169,7 @@ int main(int argc, char **argv)
     //estimate time consumption of trigger event (~ ) 
     else if (!strncmp(runmode, "2", 1)) {
         printf("mode2 \n");
-        status = ca_pend_event(1);   
+        status = ca_pend_event(10);   
         SEVCHK(status, "time out");
     }
 
@@ -233,8 +239,8 @@ void listen_event(struct event_handler_args args)
 }
 
 
-void listen_sinevent(struct event_handler_args args)
-{
+
+void listen_sinevent(struct event_handler_args args) {
     time_t timer;
     char buffer[26];
     struct tm* tm_info;
