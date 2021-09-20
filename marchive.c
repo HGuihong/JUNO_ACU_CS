@@ -40,7 +40,6 @@ char* archchname[chnum]={"power_1", "power_2", "power_3", "power_4", "power_5",
 
 void    listen_event(struct event_handler_args args);
 void save_sample(MYSQL* database);
-void save_status(MYSQL* database, int evokech);
 
 int main(int argc, char **argv)
 {
@@ -99,60 +98,38 @@ int main(int argc, char **argv)
         printf("ERROR\n");
     }
 
-    int save_signal = -1;
 
 	for(int i=0;i<5;i++) {
         status = ca_create_subscription(DBR_CTRL_INT,
-               1, chan[i], DBE_VALUE, listen_event, &save_signal, NULL);
+               1, chan[i], DBE_VALUE, listen_event, conn, NULL);
         SEVCHK(status, NULL);
     }
 	for(int i=5;i<chnum;i++) {
         status = ca_create_subscription(DBR_CTRL_FLOAT,
-               1, chan[i], DBE_ALARM, listen_event, &save_signal, NULL);
+               1, chan[i], DBE_ALARM, listen_event, conn, NULL);
         SEVCHK(status, NULL);
     }
     status = ca_pend_event(1.0);
-    save_signal = -1;
 
       
-    struct timeval start, end;  // record time consumption
-
     int sampcount = 0;
     while(sampcount<1E9) {
-    	gettimeofday(&start, NULL); 
         for(int i=0;i<chnum;i++) {
             status = ca_get(DBR_CTRL_FLOAT, chan[i], &ch_fild[i]);
             SEVCHK(status,NULL);
         }
         status = ca_pend_io(0.5);
         SEVCHK(status,NULL);
-		gettimeofday(&end, NULL);
-		double ca_get_time = (end.tv_sec - start.tv_sec) * 1000000 + (end.tv_usec - start.tv_usec);
 
-    	gettimeofday(&start, NULL); 
         for(int i=0;i<chnum;i++) {
             statusvalue[i] = ch_fild[i].status;
             samplevalue[i] = ch_fild[i].value;
         }
         save_sample(conn);
-		gettimeofday(&end, NULL);
-		double mysql_time = (end.tv_sec - start.tv_sec) * 1000000 + (end.tv_usec - start.tv_usec);
-        printf("sample: %d, ca_get_time: %g ms, mysql_time: %g ms \n", sampcount, ca_get_time/1000,  mysql_time/1000);
 
-
-        if(sampcount==0) {
-            save_status(conn, 0);
-            save_status(conn, 1);
-            save_status(conn, 2);
-            save_status(conn, 3);
-            save_status(conn, 4);
-        }
-
-        if(save_signal>=0) save_status(conn, save_signal);
-        save_signal = -1;
 
         //check ALARM
-        status = ca_pend_event(1);
+        //status = ca_pend_event(1);
         //SEVCHK(status, "time out");
         sampcount ++;
         
@@ -196,28 +173,19 @@ void save_sample(MYSQL* database)
 void listen_event(struct event_handler_args args)
 {
 
+	int evokech = 0;
     char evokechname[200];
     sprintf(evokechname, "%s", ca_name(args.chid));
     for(int i=0;i<5;i++) {
         char acuid[10];
         sprintf(acuid, "_%d", i+1);
         if(strstr(evokechname, acuid)) {
-            *(int*)args.usr = i;
+            evokech = i;
             break;
         }
     }
-    if(strstr(evokechname, "power")) {
-        printf("%s: %s\n", ca_name(args.chid), (*(struct dbr_ctrl_int *)args.dbr).value == 1? "ON":"OFF");
-    } else {
-        printf("%s: %s\n", ca_name(args.chid), alarmStatusString[(*(struct dbr_ctrl_float *)args.dbr).status]);
-    }
 
-}
-
-void save_status(MYSQL* database, int evokech)
-{
-
-    int status;
+	int status;
     
     time_t timer;
     char buffer[26];
@@ -228,22 +196,21 @@ void save_status(MYSQL* database, int evokech)
 
     strftime(buffer, 26, "%Y-%m-%d %H:%M:%S", tm_info);
 
-    int power_status = 0;
-    int pos_status = 0;
-    int current_status = 0;
-    int load_status = 0.;
-    power_status = samplevalue[evokech];
-    pos_status = statusvalue[evokech+5];
-    current_status = statusvalue[evokech+10];
-    if(evokech<4) load_status = statusvalue[evokech+15];
 
     char query_status[2000];
-    sprintf(query_status, "INSERT INTO samplestatus (acu_id, smpl_time, power_status, pos_status, current_status, load_status) VALUES ('%d', '%s', %d, %d, %d, %d)", 
-          evokech+1, buffer,  power_status, pos_status, current_status, load_status);
+    sprintf(query_status, "INSERT INTO samplestatus (acu_id, smpl_time, ch_id, status) VALUES ('%d', '%s', '%s', %d)", 
+          evokech+1, buffer, ca_name(args.chid),  (*(struct dbr_ctrl_float *)args.dbr).status);
 
 
-    int sqlstat = mysql_query(database, query_status);
+    int sqlstat = mysql_query((MYSQL*)args.usr, query_status);
     if(sqlstat) printf("%d", sqlstat);
+     
+
+    if(strstr(evokechname, "power")) {
+        printf("%s: %s\n", ca_name(args.chid), (*(struct dbr_ctrl_int *)args.dbr).value == 1? "ON":"OFF");
+    } else {
+        printf("%s: %s\n", ca_name(args.chid), alarmStatusString[(*(struct dbr_ctrl_float *)args.dbr).status]);
+    }
 
 }
 

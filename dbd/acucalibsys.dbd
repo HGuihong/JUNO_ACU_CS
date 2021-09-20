@@ -128,12 +128,10 @@ CREATE TABLE IF NOT EXISTS sample
 DROP TABLE IF EXISTS samplestatus;
 CREATE TABLE IF NOT EXISTS samplestatus
 (
-   acu_id  VARCHAR(100)  NOT NULL       DEFAULT ""                                COMMENT 'Channel ID',
+   acu_id  VARCHAR(100)    NOT NULL       DEFAULT ""                                COMMENT 'ACU ID',
    smpl_time TIMESTAMP     NOT NULL     DEFAULT '2000-01-01 00:00:00'             COMMENT 'Time stamp',
-   power_status  TINYINT   NOT NULL     DEFAULT 0                                 COMMENT 'power status',
-   pos_status  TINYINT     NOT NULL     DEFAULT 0                                 COMMENT 'position status',
-   current_status  TINYINT NOT NULL     DEFAULT 0                                 COMMENT 'current status',
-   load_status  TINYINT    NOT NULL     DEFAULT 0                                 COMMENT 'load status'
+   ch_id  VARCHAR(100)  NOT NULL       DEFAULT ""                                COMMENT 'Channel ID',
+   status  TINYINT      NOT NULL     DEFAULT 0                                 COMMENT 'status'
 );
 
 #INSERT INTO samplestatus (acu_id, smpl_time, power_status, pos_status, current_status, load_status)
