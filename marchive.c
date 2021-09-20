@@ -36,11 +36,11 @@ char* archchname[chnum]={"power_1", "power_2", "power_3", "power_4", "power_5",
                          "src_pos_1", "src_pos_2", "src_pos_3", "src_pos_4", "src_pos_5",
                          "mot_I_1", "mot_I_2", "mot_I_3", "mot_I_4", "mot_I_5",
                          "mot_load_1", "mot_load_2", "mot_load_3", "mot_load_4"}; 
-char* sinchname[1000];
-chid  sinchan[1000];
+char* ttestchname = "ttestch";
+chid  ttestchan;
 
 void listen_event(struct event_handler_args args);
-void listen_sinevent(struct event_handler_args args);
+void listen_ttestevent(struct event_handler_args args);
 void save_sample(MYSQL* database);
 void save_status(MYSQL* database, int evokech);
 
@@ -77,12 +77,8 @@ int main(int argc, char **argv)
   	    status = ca_search(	chname[i], &chan[i]);
   	    SEVCHK(status, "Bad Channel Name?")
     }
-    for(int i=0;i<999;i++) {
-        char buffer[26];
-        sprintf(buffer, "sinch%d", i);
-        status = ca_search(&buffer, &sinchan[i]);
-        SEVCHK(status, "Bad Channel Name?")
-    }
+    status = ca_search(ttestchname, &ttestchan);
+    SEVCHK(status, "Bad Channel Name?")
 
 
 	/*
@@ -127,15 +123,13 @@ int main(int argc, char **argv)
     save_signal = -1;
     
 
-    for(int i=0;i<999;i++) {
+    if(!strncmp(runmode, "2", 1)) {
         status = ca_create_subscription(DBR_TIME_FLOAT,
-                   1, sinchan[i],  DBE_VALUE, listen_sinevent, conn, NULL);
+                   1, ttestchan,  DBE_VALUE, listen_ttestevent, conn, NULL);
         SEVCHK(status, NULL);
     }
-
       
     struct timeval start, end;  // record time consumption
-
     int sampcount = 0;
     gettimeofday(&start, NULL); 
 
@@ -152,24 +146,23 @@ int main(int argc, char **argv)
         }
 
     }
-    //estimate time consumption of ca_get (~55 us)
+    //estimate time consumption of ca_get (~45 us)
     else if(!strncmp(runmode, "1", 1)) {
         printf("mode1 \n");
+        float temp;
         while(sampcount<1E5) {
-            for(int i=0;i<chnum;i++) {
-                status = ca_get(DBR_CTRL_FLOAT, chan[i], &ch_fild[i]);
-                SEVCHK(status,NULL);
-            }
-            status = ca_pend_io(1);
+            status = ca_get(DBR_FLOAT, ttestchan, &temp);
             SEVCHK(status,NULL);
 
+            status = ca_pend_io(1);
+            SEVCHK(status,NULL);
             sampcount ++;
         }
     }
     //estimate time consumption of trigger event (~ ) 
     else if (!strncmp(runmode, "2", 1)) {
         printf("mode2 \n");
-        status = ca_pend_event(10);   
+        status = ca_pend_event(200);   
         SEVCHK(status, "time out");
     }
 
@@ -240,7 +233,7 @@ void listen_event(struct event_handler_args args)
 
 
 
-void listen_sinevent(struct event_handler_args args) {
+void listen_ttestevent(struct event_handler_args args) {
     time_t timer;
     char buffer[26];
     struct tm* tm_info;
@@ -248,16 +241,22 @@ void listen_sinevent(struct event_handler_args args) {
     tm_info = localtime(&timer);
     strftime(buffer, 26, "%Y-%m-%d %H:%M:%S", tm_info);
 
+    //current timestamp
+    struct timeval start;
+    gettimeofday(&start, NULL);
+    double time = start.tv_sec * 1000000. +  start.tv_usec;
+
+
 	struct dbr_time_float *cdData;
   	char    timeText[28];
 
   	cdData = (struct dbr_time_float *) args.dbr;
-  	epicsTimeToStrftime(timeText,28,"%m/%d/%y %H:%M:%S.%09f",&cdData->stamp);
-  	printf("mca %-30s %s,  %g \n", ca_name(args.chid), timeText, *(dbr_float_t*)&cdData->value);
-    //printf("ns %d \n", *(int*)(&cdData->stamp.nsec));
+  	epicsTimeToStrftime(timeText,28,"%m/%d/%y-%H:%M:%S.%09f",&cdData->stamp);
+  	//printf("mca %-30s %s, %.8f,  %g \n", ca_name(args.chid), timeText, time, *(dbr_float_t*)&cdData->value);
+  	printf("%-30s  %d  %.f %d  %g \n", timeText, *(int*)(&cdData->stamp.nsec)/1000, time, start.tv_usec, *(dbr_float_t*)&cdData->value);
 
     char query_sample[2000];
-    sprintf(query_sample, "INSERT INTO sinsample (smpl_time, value) VALUES ('%s', %g)", buffer, *(dbr_float_t*)&cdData->value);
+    sprintf(query_sample, "INSERT INTO ttestsample (smpl_time, value) VALUES ('%s', %g)", buffer, *(dbr_float_t*)&cdData->value);
 
     int sqlstat = mysql_query((MYSQL*)args.usr, query_sample);
     if(sqlstat) printf("%d", sqlstat);
