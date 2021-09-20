@@ -162,7 +162,7 @@ int main(int argc, char **argv)
     //estimate time consumption of trigger event (~ ) 
     else if (!strncmp(runmode, "2", 1)) {
         printf("mode2 \n");
-        status = ca_pend_event(200);   
+        status = ca_pend_event(550);   
         SEVCHK(status, "time out");
     }
 
@@ -244,16 +244,19 @@ void listen_ttestevent(struct event_handler_args args) {
     //current timestamp
     struct timeval start;
     gettimeofday(&start, NULL);
-    double time = start.tv_sec * 1000000. +  start.tv_usec;
+    double curtime = start.tv_sec * 1000000. +  start.tv_usec;
+    int curtime_usec = start.tv_usec;
 
-
+    //pv timestamp
 	struct dbr_time_float *cdData;
   	char    timeText[28];
-
   	cdData = (struct dbr_time_float *) args.dbr;
+    int pvtime_usec = *(int*)(&cdData->stamp.nsec)/1000;
+
   	epicsTimeToStrftime(timeText,28,"%m/%d/%y-%H:%M:%S.%09f",&cdData->stamp);
+  	printf("%-30s  %d  %.f %d  %g \n", timeText, pvtime_usec, 
+                       curtime, curtime_usec, *(dbr_float_t*)&cdData->value);
   	//printf("mca %-30s %s, %.8f,  %g \n", ca_name(args.chid), timeText, time, *(dbr_float_t*)&cdData->value);
-  	printf("%-30s  %d  %.f %d  %g \n", timeText, *(int*)(&cdData->stamp.nsec)/1000, time, start.tv_usec, *(dbr_float_t*)&cdData->value);
 
     char query_sample[2000];
     sprintf(query_sample, "INSERT INTO ttestsample (smpl_time, value) VALUES ('%s', %g)", buffer, *(dbr_float_t*)&cdData->value);
