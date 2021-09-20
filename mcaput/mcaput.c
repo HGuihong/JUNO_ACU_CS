@@ -68,7 +68,7 @@ int main(int argc, char **argv)
     
     struct timeval start, end;
     float temp = 0.;
-    for(int i=0;i<1E2;i++) {
+    for(int i=0;i<5E2;i++) {
         gettimeofday(&start, NULL);
         temp += 1.;
         status = ca_put(DBR_FLOAT, ttestchan, &temp);
